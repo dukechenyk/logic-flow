@@ -1,5 +1,17 @@
 <template>
-  <div class="container" ref="container"></div>
+  <div class="main">
+    <div class="container" ref="container"></div>
+    <el-dialog
+      placement="auto"
+      width="800px"
+      trigger="manual"
+      :visible.sync="visible"
+    >
+      <div class="dialog-content">
+        <div v-for="item in typeList" :key="item.type" @click="handleAddNode(item.type)" class="lf-click" :class="`lf-${item.type}`">{{item.name}}</div>
+      </div>
+    </el-dialog>
+  </div>
 </template>
 
 <script>
@@ -11,7 +23,9 @@ export default {
   data() {
     return {
       count: 3,
-      enterModel: {}
+      enterModel: {},
+      visible: false,
+      typeList: [{type: 'fillet', name: '圆角'}, {type: 'circle', name: '圆形'}, {type: 'rect', name: '矩形'}]
     }
   },
   mounted() {
@@ -29,13 +43,19 @@ export default {
           x: 100,
           y: 100,
           text: "节点1",
+          properties:{
+            type: 'rect'
+          }
         },
         {
           id: "2",
-          type: "circle",
+          type: "button-node",
           x: 300,
           y: 200,
           text: "节点2",
+          properties:{
+            type: 'circle'
+          }
         },
       ],
       edges: [
@@ -53,9 +73,15 @@ export default {
     })
 
     this.lf.on("custom:button-click", ({direction}) => {
+      this.visible = true
+      this.direction = direction
+    });
+  },
+  methods: {
+    handleAddNode(type) {
       let x
       let y
-      switch (direction) {
+      switch (this.direction) {
         case 'top':
           x = this.enterModel.x
           y = this.enterModel.y - 200
@@ -77,11 +103,14 @@ export default {
       }
       const id = this.count + 'add'
       this.lf.addNode({
-        type: "button-node",
+        type: 'button-node',
         x,
         y,
         id: id,
         text: '节点' + this.count,
+        properties: {
+          type: type
+        }
       });
       this.lf.addEdge({
         sourceNodeId: this.enterModel.id,
@@ -90,9 +119,9 @@ export default {
         text: "连线",
       });
       this.count += 1
-      this.lf.getNodeIncomingNode(this.enterModel.id);
-    });
-  },
+      this.visible = false
+    }
+  }
 };
 </script>
 
@@ -101,26 +130,72 @@ body,html{
   width: 100%;
   height: 100%;
 }
-.container {
+.container,.main {
   width: 100%;
   height: 100%;
 }
+
+.dialog-content{
+  display: grid;
+  grid-template-columns: repeat(4,auto);
+  grid-gap: 8px;
+}
+
+.lf-click{
+  cursor: pointer;
+  width: 150px;
+  height: 150px;
+  border: 2px solid #010101;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lf-fillet{
+  border-radius: 8px;
+}
+.lf-circle{
+  border-radius: 50%;
+}
+.lf-rect{
+  border-radius: 0;
+}
+
 .logic-custom {
+  background-color: #fff;
   width: 100%;
   height: 100%;
-  border-radius: 10px;
-  border: 2px solid #838382;
+  border: 2px solid #000000;
   box-sizing: border-box;
   position: relative;
 }
-.logic-custom:hover .logic-btn{
+.logic-rect{
+  border-radius: 0;
+}
+.logic-circle{
+  border-radius: 50%;
+}
+.logic-fillet{
+  border-radius: 10px;
+}
+
+
+.logic-custom:hover .logic-show{
   display: block;
 }
-.logic-btn{
+.logic-show{
   position: absolute;
-  background: transparent;
-  border-radius: 50%;
   display: none;
+}
+.logic-btn{
+  background: transparent;
+  border: 1px solid #ccc;
+  border-radius: 50%;
+  width: 15px;
+  height: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .add-top{
   top: 4px;

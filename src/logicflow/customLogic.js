@@ -4,13 +4,21 @@ class ButtonNode extends HtmlNode {
   setHtml(rootEl) {
     const { graphModel, model } = this.props;
     const el = document.createElement("div");
-    el.className = `logic-custom uml-wrapper${model.id}`;
+    el.className = `logic-custom uml-wrapper${model.id} logic-${model.properties.type}`;
     const html = `
       <div>
-        <button class="logic-btn add-top" onclick="setData('top')" onmousedown="stop(arguments[0])">+</button>
-        <button class="logic-btn add-right" onclick="setData('right')" onmousedown="stop(arguments[0])">+</button>
-        <button class="logic-btn add-bottom" onclick="setData('bottom')" onmousedown="stop(arguments[0])">+</button>
-        <button class="logic-btn add-left" onclick="setData('left')" onmousedown="stop(arguments[0])">+</button>
+        <div class="logic-show add-top">
+          <button class="logic-btn" onclick="setData('top')" onmousedown="stop(arguments[0])">+</button>
+        </div>
+        <div class="logic-show add-right">
+          <button class="logic-btn" onclick="setData('right')" onmousedown="stop(arguments[0])">+</button>
+        </div>
+        <div class="logic-show add-bottom">
+          <button class="logic-btn" onclick="setData('bottom')" onmousedown="stop(arguments[0])">+</button>
+        </div>
+        <div class="logic-show add-left">
+          <button class="logic-btn" onclick="setData('left')" onmousedown="stop(arguments[0])">+</button>
+        </div>
       </div>
     `;
     el.innerHTML = html;
