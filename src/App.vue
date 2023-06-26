@@ -1,5 +1,8 @@
 <template>
   <div class="main">
+    <div class="right-content">
+      <div v-for="item in typeList" :key="item.type" @click="handleRightAdd(item.type)" class="right-click" :class="`lf-${item.type}`">{{item.name}}</div>
+    </div>
     <div class="container" ref="container"></div>
     <el-dialog
       placement="auto"
@@ -22,7 +25,7 @@ import customLogic from "./logicflow/customLogic";
 export default {
   data() {
     return {
-      count: 3,
+      count: 1,
       enterModel: {},
       visible: false,
       typeList: [{type: 'fillet', name: '圆角'}, {type: 'circle', name: '圆形'}, {type: 'rect', name: '矩形'}]
@@ -37,34 +40,8 @@ export default {
 
     this.lf.render({
       nodes: [
-        {
-          id: "1",
-          type: "button-node",
-          x: 100,
-          y: 100,
-          text: "节点1",
-          properties:{
-            type: 'rect'
-          }
-        },
-        {
-          id: "2",
-          type: "button-node",
-          x: 300,
-          y: 200,
-          text: "节点2",
-          properties:{
-            type: 'circle'
-          }
-        },
       ],
       edges: [
-        {
-          sourceNodeId: "1",
-          targetNodeId: "2",
-          type: "polyline",
-          text: "连线",
-        },
       ],
     });
 
@@ -78,6 +55,20 @@ export default {
     });
   },
   methods: {
+    handleRightAdd(type){
+      const id = this.count + 'add'
+      this.lf.addNode({
+        type: 'button-node',
+        x: 300,
+        y: 300,
+        id: id,
+        text: '节点' + this.count,
+        properties: {
+          type: type
+        }
+      });
+      this.count += 1
+    },
     handleAddNode(type) {
       let x
       let y
@@ -133,14 +124,43 @@ body,html{
 .container,.main {
   width: 100%;
   height: 100%;
+  position: relative;
 }
 
-.dialog-content{
+/* 侧边栏样式 */
+.right-content{
+  position: absolute;
+  left: 8px;
+  top: 10%;
+  background-color: #fff;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  align-items: center;
+  box-shadow: 0px 4px 10px 2px #ccc;
+  padding: 8px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  z-index: 999;
+}
+.right-click{
+  cursor: pointer;
+  width: 50px;
+  height: 50px;
+  border: 2px solid #010101;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 4px 0;
+}
+
+ /* 弹窗样式 */
+ .dialog-content{
   display: grid;
   grid-template-columns: repeat(4,auto);
   grid-gap: 8px;
 }
-
 .lf-click{
   cursor: pointer;
   width: 150px;
@@ -161,6 +181,8 @@ body,html{
   border-radius: 0;
 }
 
+
+/* 自定义流程样式 */
 .logic-custom {
   background-color: #fff;
   width: 100%;
