@@ -1,4 +1,7 @@
-# logic-flow
+## logic-flow
+```
+基础vue，logic-flow 拓展 快速创建节点
+```
 
 ## Project setup
 ```
@@ -7,7 +10,7 @@ npm install
 
 ### Compiles and hot-reloads for development
 ```
-npm run serve
+npm run dev
 ```
 
 ### Compiles and minifies for production
