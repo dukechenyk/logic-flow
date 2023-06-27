@@ -2,7 +2,7 @@
   <div class="main">
     <div class="right-content">
       <div v-for="item in typeList" :key="item.type" class="right-box" >
-        <div @click="handleRightAdd(item.type)" class="right-click" :class="`lf-${item.type}`"></div>
+        <div @click="handleRightAdd(item)" class="right-click" :class="`lf-${item.type}`"></div>
         {{item.name}}
       </div>
     </div>
@@ -19,12 +19,13 @@ export default {
   data() {
     return {
       count: 1,
-      enterModel: {},
+      enterNode: {},
+      enterEdge: {},
       direction: '',
       typeList: [
-        {type: 'fillet', name: '圆角'},
-        {type: 'circle', name: '圆形'},
-        {type: 'rect', name: '矩形'},
+        {type: 'fillet', name: '圆角', width: 100, height: 80},
+        {type: 'circle', name: '圆形', width: 80, height: 80},
+        {type: 'rect', name: '矩形', width: 100, height: 50},
       ]
     }
   },
@@ -32,6 +33,20 @@ export default {
     this.lf = new LogicFlow({
       container: this.$refs.container,
       grid: true,
+      keyboard: {
+        enabled: true,
+        shortcuts: [
+          {
+            keys: ["backspace"],
+            callback: () => {
+              this.lf.deleteEdge(this.enterEdge.id)
+              this.lf.deleteNode(this.enterNode.id)
+              this.enterEdge = {}
+              this.enterNode = {}
+            },
+          },
+        ],
+      },
     });
     this.lf.register(customLogic)
 
@@ -41,19 +56,44 @@ export default {
       edges: [
       ],
     });
-
-    this.lf.on("node:mouseenter",({data}) => {
-      this.enterModel = data
-    })
-
-    this.lf.on("custom:button-type", ({type}) => {
-      this.handleAddNode(type, this.direction)
-      const popover = document.getElementById(`mypopover${this.enterModel.id}`);
+    // 节点点击事件
+    this.lf.on("node:click", ({data}) => {
+      this.hiddenLogic()
+      if(data?.id != this.enterNode?.id){
+        this.enterNode = data
+        this.enterEdge = {}
+        const popover = document.getElementById(`logic-custom-popover${data.id}`);
+        popover.classList.add('show-logic-show')
+        popover.classList.remove('hidden-logic-show')
+      }
+    });
+    // 边点击事件
+    this.lf.on("edge:click", ({data}) => {
+      this.hiddenLogic()
+      this.enterEdge = data
+      this.enterNode = {}
+    });
+    // 画布点击事件
+    this.lf.on("blank:click", () => {
+      this.hiddenLogic()
+      this.enterEdge = {}
+      this.enterNode = {}
+    });
+    // 选择节点类型
+    this.lf.on("custom:button-type", ({typeItem}) => {
+      this.handleAddNode(typeItem, this.direction)
+      const popover = document.getElementById(`mypopover${this.enterNode.id}`);
       popover?.hidePopover();
     });
-
+    // 点击快速添加按钮
     this.lf.on("custom:button-data", ({direction}) => {
       this.direction = direction
+      this.setLogicXy(direction)
+    });
+  },
+  methods: {
+    // 设置快速添加节点弹出框位置
+    setLogicXy(direction){
       let popovertop = 0;
       let popoverleft = 0;
       let x = 0;
@@ -89,69 +129,83 @@ export default {
         default:
           break;
       }
-      const logic = document.getElementById(`logic-custom-popover${this.enterModel.id}`);
+      const logic = document.getElementById(`logic-custom-popover${this.enterNode.id}`);
       logic.style = `--popover-top: ${x}px; --popover-left: ${y}px`
-      const popover = document.getElementById(`mypopover${this.enterModel.id}`);
+      this.hiddenLogic()
+      const popover = document.getElementById(`mypopover${this.enterNode.id}`);
       popover?.showPopover();
-    });
-  },
-  methods: {
-    handleRightAdd(type){
-      const id = this.count + 'add'
+    },
+    // 隐藏快速添加节点按钮
+    hiddenLogic(){
+      if(this.enterNode?.id){
+        const logicCustom = document.getElementById(`logic-custom-popover${this.enterNode.id}`);
+        logicCustom.classList.add('hidden-logic-show')
+        logicCustom.classList.remove('show-logic-show')
+      }
+    },
+    // 侧边栏添加节点
+    handleRightAdd(item){
+      const nodeId = 'node_' + this.count
       this.lf.addNode({
         type: 'button-node',
         x: 300,
         y: 300,
-        id: id,
+        id: nodeId,
         text: '节点' + this.count,
         properties: {
-          type: type
+          type: item.type,
+          width: item.width,
+          height: item.height
         }
       });
       this.count += 1
     },
-    handleAddNode(type, direction) {
+    // 快速添加节点和连线
+    handleAddNode(item, direction) {
       let x
       let y
       switch (direction) {
         case 'top':
-          x = this.enterModel.x
-          y = this.enterModel.y - 200
+          x = this.enterNode.x
+          y = this.enterNode.y - 200
           break;
         case 'right':
-          x = this.enterModel.x + 200
-          y = this.enterModel.y
+          x = this.enterNode.x + 200
+          y = this.enterNode.y
           break;
         case 'bottom':
-          x = this.enterModel.x
-          y = this.enterModel.y + 200
+          x = this.enterNode.x
+          y = this.enterNode.y + 200
           break;
         case 'left':
-          x = this.enterModel.x - 200
-          y = this.enterModel.y
+          x = this.enterNode.x - 200
+          y = this.enterNode.y
           break;
         default:
           break;
       }
-      const id = this.count + 'add'
+      const nodeId = 'node_' + this.count
+      const edgeId = 'edge_' + this.count
       this.lf.addNode({
         type: 'button-node',
         x,
         y,
-        id: id,
+        id: nodeId,
         text: '节点' + this.count,
         properties: {
-          type: type
+          type: item.type,
+          width: item.width,
+          height: item.height
         }
       });
       this.lf.addEdge({
-        sourceNodeId: this.enterModel.id,
-        targetNodeId: id,
+        sourceNodeId: this.enterNode.id,
+        targetNodeId: nodeId,
+        id: edgeId,
         type: "polyline",
         text: "连线",
       });
       this.count += 1
-      this.visible = false
     }
   }
 };
@@ -162,6 +216,9 @@ export default {
 body,html{
   width: 100%;
   height: 100%;
+}
+foreignObject{
+  overflow: visible;
 }
 .container,.main {
   width: 100%;
@@ -243,6 +300,7 @@ body,html{
 }
 .lf-rect{
   border-radius: 0;
+  height: 15px;
 }
 
 
@@ -265,17 +323,18 @@ body,html{
   border-radius: 10px;
 }
 
-
-.logic-custom:hover .logic-show{
+.show-logic-show .logic-show{
+  position: absolute;
   display: block;
 }
-.logic-show{
+.hidden-logic-show .logic-show{
   position: absolute;
   display: none;
 }
 .logic-btn{
-  background: transparent;
-  border: 1px solid #ccc;
+  background-color: #c8e3ff;
+  color: #fff;
+  border: 1px solid #fff;
   border-radius: 50%;
   width: 15px;
   height: 15px;
@@ -284,23 +343,23 @@ body,html{
   justify-content: center;
 }
 .add-top{
-  top: 4px;
+  top: -25px;
   right: 50%;
   transform: translate(50%, 0);
 }
 .add-right{
   top: 50%;
-  right: 4px;
+  right: -25px;
   transform: translate(0, -50%);
 }
 .add-bottom{
-  bottom: 4px;
+  bottom: -25px;
   right: 50%;
   transform: translate(50%, 0);
 }
 .add-left{
   top: 50%;
-  left: 4px;
+  left: -25px;
   transform: translate(0, -50%);
 }
 </style>

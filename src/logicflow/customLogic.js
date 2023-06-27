@@ -7,9 +7,9 @@ class ButtonNode extends HtmlNode {
     el.className = `logic-custom uml-wrapper${model.id} logic-${model.properties.type}`;
     // 处理弹出层列表
     const typeList = [
-      {type: 'fillet', name: '圆角'},
-      {type: 'circle', name: '圆形'},
-      {type: 'rect', name: '矩形'},
+      {type: 'fillet', name: '圆角', width: 100, height: 80},
+      {type: 'circle', name: '圆形', width: 80, height: 80},
+      {type: 'rect', name: '矩形', width: 100, height: 50},
     ]
 
     const popover = typeList?.map(item => (
@@ -20,7 +20,7 @@ class ButtonNode extends HtmlNode {
     )).join('')
 
     const html = `
-      <div id="logic-custom-popover${model.id}" style="--popover-top: 0px; --popover-left: 0px">
+      <div id="logic-custom-popover${model.id}" class="hidden-logic-show" style="--popover-top: 0px; --popover-left: 0px">
         <div popover="auto" id="mypopover${model.id}">
           <div class="dialog-content">
             ${popover}
@@ -47,7 +47,8 @@ class ButtonNode extends HtmlNode {
       ev.stopPropagation();
     };
     window.setType = (type) => {
-      graphModel.eventCenter.emit("custom:button-type", { type });
+      const typeItem = typeList?.find(item => item.type === type)
+      graphModel.eventCenter.emit("custom:button-type", { typeItem });
     };
     window.setData = (direction) => {
       graphModel.eventCenter.emit("custom:button-data", { direction });
@@ -57,9 +58,10 @@ class ButtonNode extends HtmlNode {
 
 class ButtonNodeModel extends HtmlNodeModel {
   setAttributes() {
-    this.width = 130;
-    this.height = 130;
-    this.text.editable = false;
+    const {properties} = this
+    this.width = properties.width
+    this.height = properties.height
+    this.text.editable = true;
   }
 }
 
