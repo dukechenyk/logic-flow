@@ -5,8 +5,27 @@ class ButtonNode extends HtmlNode {
     const { graphModel, model } = this.props;
     const el = document.createElement("div");
     el.className = `logic-custom uml-wrapper${model.id} logic-${model.properties.type}`;
+    // 处理弹出层列表
+    const typeList = [
+      {type: 'fillet', name: '圆角'},
+      {type: 'circle', name: '圆形'},
+      {type: 'rect', name: '矩形'},
+    ]
+
+    const popover = typeList?.map(item => (
+      `<div class="dialog-box" >
+        <div onClick="setType('${item.type}')" class="lf-click lf-${item.type}"></div>
+        ${item.name}
+      </div>`
+    )).join('')
+
     const html = `
-      <div>
+      <div id="logic-custom-popover${model.id}" style="--popover-top: 0px; --popover-left: 0px">
+        <div popover="auto" id="mypopover${model.id}">
+          <div class="dialog-content">
+            ${popover}
+          </div>
+        </div>
         <div class="logic-show add-top">
           <button class="logic-btn" onclick="setData('top')" onmousedown="stop(arguments[0])">+</button>
         </div>
@@ -27,8 +46,11 @@ class ButtonNode extends HtmlNode {
     window.stop = (ev) => {
       ev.stopPropagation();
     };
+    window.setType = (type) => {
+      graphModel.eventCenter.emit("custom:button-type", { type });
+    };
     window.setData = (direction) => {
-      graphModel.eventCenter.emit("custom:button-click", { direction });
+      graphModel.eventCenter.emit("custom:button-data", { direction });
     };
   }
 }

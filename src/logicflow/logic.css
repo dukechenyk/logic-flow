@@ -1,0 +1,8 @@
+:popover-open {
+  position: relative;
+  inset: unset;
+  width: 80px;
+  top: var(--popover-top);
+  left: var(--popover-left);
+  margin: 0;
+}
