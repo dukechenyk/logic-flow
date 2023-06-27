@@ -1,19 +1,12 @@
 <template>
   <div class="main">
     <div class="right-content">
-      <div v-for="item in typeList" :key="item.type" @click="handleRightAdd(item.type)" class="right-click" :class="`lf-${item.type}`">{{item.name}}</div>
+      <div v-for="item in typeList" :key="item.type" class="right-box" >
+        <div @click="handleRightAdd(item.type)" class="right-click" :class="`lf-${item.type}`"></div>
+        {{item.name}}
+      </div>
     </div>
     <div class="container" ref="container"></div>
-    <el-dialog
-      placement="auto"
-      width="800px"
-      trigger="manual"
-      :visible.sync="visible"
-    >
-      <div class="dialog-content">
-        <div v-for="item in typeList" :key="item.type" @click="handleAddNode(item.type)" class="lf-click" :class="`lf-${item.type}`">{{item.name}}</div>
-      </div>
-    </el-dialog>
   </div>
 </template>
 
@@ -27,8 +20,12 @@ export default {
     return {
       count: 1,
       enterModel: {},
-      visible: false,
-      typeList: [{type: 'fillet', name: '圆角'}, {type: 'circle', name: '圆形'}, {type: 'rect', name: '矩形'}]
+      direction: '',
+      typeList: [
+        {type: 'fillet', name: '圆角'},
+        {type: 'circle', name: '圆形'},
+        {type: 'rect', name: '矩形'},
+      ]
     }
   },
   mounted() {
@@ -49,9 +46,53 @@ export default {
       this.enterModel = data
     })
 
-    this.lf.on("custom:button-click", ({direction}) => {
-      this.visible = true
+    this.lf.on("custom:button-type", ({type}) => {
+      this.handleAddNode(type, this.direction)
+      const popover = document.getElementById(`mypopover${this.enterModel.id}`);
+      popover?.hidePopover();
+    });
+
+    this.lf.on("custom:button-data", ({direction}) => {
       this.direction = direction
+      let popovertop = 0;
+      let popoverleft = 0;
+      let x = 0;
+      let y = 0;
+      const e = event || window.event;  //标准化事件对象
+      if (e.pageX || e.pageY) {  //获取鼠标指针的当前坐标值
+        popovertop = e.pageX;
+        popoverleft = e.pageY;
+      } else if (e.clientX || e.clientY) {
+        popovertop = event.clientX + document.documentElement.scrollLeft + document.body.scrollLeft;
+        popoverleft = event.clientY + document.documentElement.scrollTop + document.body.scrollTop;
+      }
+      // 获取选择组件高度
+      const popoverHeight = Math.ceil(this.typeList?.length / 2) * 60 + 30
+
+      switch (direction) {
+        case 'top':
+          x = popoverleft - popoverHeight
+          y = popovertop + 10
+          break;
+        case 'right':
+          x = popoverleft
+          y = popovertop + 10
+          break;
+        case 'bottom':
+          x = popoverleft + 10
+          y = popovertop
+          break;
+        case 'left':
+          x = popoverleft
+          y = popovertop - 100
+          break;
+        default:
+          break;
+      }
+      const logic = document.getElementById(`logic-custom-popover${this.enterModel.id}`);
+      logic.style = `--popover-top: ${x}px; --popover-left: ${y}px`
+      const popover = document.getElementById(`mypopover${this.enterModel.id}`);
+      popover?.showPopover();
     });
   },
   methods: {
@@ -69,10 +110,10 @@ export default {
       });
       this.count += 1
     },
-    handleAddNode(type) {
+    handleAddNode(type, direction) {
       let x
       let y
-      switch (this.direction) {
+      switch (direction) {
         case 'top':
           x = this.enterModel.x
           y = this.enterModel.y - 200
@@ -117,6 +158,7 @@ export default {
 </script>
 
 <style>
+@import './logicflow/logic.css';
 body,html{
   width: 100%;
   height: 100%;
@@ -144,10 +186,21 @@ body,html{
   border-radius: 8px;
   z-index: 999;
 }
+
+.right-box{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-around;
+  height: 60px;
+  font-size: 12px;
+  padding: 0 8px;
+}
+
 .right-click{
   cursor: pointer;
-  width: 50px;
-  height: 50px;
+  width: 30px;
+  height: 30px;
   border: 2px solid #010101;
   display: flex;
   align-items: center;
@@ -158,13 +211,24 @@ body,html{
  /* 弹窗样式 */
  .dialog-content{
   display: grid;
-  grid-template-columns: repeat(4,auto);
+  grid-template-columns: repeat(2,auto);
   grid-gap: 8px;
 }
+
+.dialog-box{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-around;
+  height: 60px;
+  font-size: 12px;
+}
+
 .lf-click{
   cursor: pointer;
-  width: 150px;
-  height: 150px;
+  width: 30px;
+  height: 30px;
+  font-size: 12px;
   border: 2px solid #010101;
   display: flex;
   align-items: center;
