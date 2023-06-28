@@ -84,8 +84,6 @@ export default {
     // 节点拖拽事件
     this.lf.on("node:dragstart", () => {
       this.hiddenPopover()
-      this.enterEdge = {}
-      this.enterNode = {}
     })
 
     // 边点击事件
@@ -98,8 +96,6 @@ export default {
     this.lf.on("blank:mousedown", () => {
       this.hiddenLogic()
       this.hiddenPopover()
-      this.enterEdge = {}
-      this.enterNode = {}
     });
     // 选择节点类型
     this.lf.on("custom:button-type", ({typeItem}) => {
@@ -205,6 +201,8 @@ export default {
         popover?.hidePopover();
       }
       this.lf.clearSelectElements();
+      this.enterEdge = {}
+      this.enterNode = {}
     },
     // 侧边栏添加节点
     handleRightAdd(item){
