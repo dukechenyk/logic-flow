@@ -22,6 +22,19 @@ export default {
       enterNode: {},
       enterEdge: {},
       direction: '',
+      cilent: {
+        x: 0,
+        y: 0
+      },
+      transItem: {
+        x: 0,
+        y: 0
+      },
+      popoverItem: {
+        x: 0,
+        y: 0
+      },
+      showPopover: false,
       typeList: [
         {type: 'fillet', name: '圆角', width: 100, height: 80},
         {type: 'circle', name: '圆形', width: 80, height: 80},
@@ -33,6 +46,8 @@ export default {
     this.lf = new LogicFlow({
       container: this.$refs.container,
       grid: true,
+      stopZoomGraph: true, // 禁止缩放
+      // stopScrollGraph: true, // 禁止鼠标滚动移动画布
       keyboard: {
         enabled: true,
         shortcuts: [
@@ -49,7 +64,6 @@ export default {
       },
     });
     this.lf.register(customLogic)
-
     this.lf.render({
       nodes: [
       ],
@@ -67,28 +81,56 @@ export default {
         popover.classList.remove('hidden-logic-show')
       }
     });
+    // 节点拖拽事件
+    this.lf.on("node:dragstart", () => {
+      this.hiddenPopover()
+      this.enterEdge = {}
+      this.enterNode = {}
+    })
+
     // 边点击事件
     this.lf.on("edge:click", ({data}) => {
       this.hiddenLogic()
       this.enterEdge = data
       this.enterNode = {}
     });
-    // 画布点击事件
-    this.lf.on("blank:click", () => {
+    // 画布鼠标抬起事件
+    this.lf.on("blank:mousedown", () => {
       this.hiddenLogic()
+      this.hiddenPopover()
       this.enterEdge = {}
       this.enterNode = {}
     });
     // 选择节点类型
     this.lf.on("custom:button-type", ({typeItem}) => {
       this.handleAddNode(typeItem, this.direction)
-      const popover = document.getElementById(`mypopover${this.enterNode.id}`);
-      popover?.hidePopover();
+      this.hiddenPopover()
     });
     // 点击快速添加按钮
     this.lf.on("custom:button-data", ({direction}) => {
       this.direction = direction
       this.setLogicXy(direction)
+    });
+    // 画布平移
+    this.lf.on("graph:transform", ({transform}) => {
+      // 上次移动的坐标点距离
+      const transItemX = this.transItem.x
+      const transItemY = this.transItem.y
+      // 移动后的坐标点距离
+      const transformX = transform.TRANSLATE_X
+      const transformY = transform.TRANSLATE_Y
+      // 保留上次移动点
+      this.transItem = {
+        x: transformY,
+        y: transformX
+      }
+      this.cilent = {
+        x: this.cilent.y + (transformY - transItemY),
+        y: this.cilent.x + (transformX - transItemX),
+      }
+      if(this.showPopover){
+        this.setPopoverMove()
+      }
     });
   },
   methods: {
@@ -129,11 +171,21 @@ export default {
         default:
           break;
       }
+      this.popoverItem = {x, y}
       const logic = document.getElementById(`logic-custom-popover${this.enterNode.id}`);
       logic.style = `--popover-top: ${x}px; --popover-left: ${y}px`
       this.hiddenLogic()
       const popover = document.getElementById(`mypopover${this.enterNode.id}`);
       popover?.showPopover();
+      this.showPopover = true
+      this.cilent = {x: 0, y: 0}
+    },
+    // 移动画布修改popover位置
+    setPopoverMove(){
+      const x = this.popoverItem.x + this.cilent.x
+      const y = this.popoverItem.y + this.cilent.y
+      const logic = document.getElementById(`logic-custom-popover${this.enterNode.id}`);
+      logic.style = `--popover-top: ${x}px; --popover-left: ${y}px`
     },
     // 隐藏快速添加节点按钮
     hiddenLogic(){
@@ -141,6 +193,14 @@ export default {
         const logicCustom = document.getElementById(`logic-custom-popover${this.enterNode.id}`);
         logicCustom.classList.add('hidden-logic-show')
         logicCustom.classList.remove('show-logic-show')
+      }
+      this.showPopover = false
+      this.lf.clearSelectElements();
+    },
+    hiddenPopover(){
+      if(this.enterNode?.id && this.showPopover){
+        const popover = document.getElementById(`mypopover${this.enterNode.id}`);
+        popover?.hidePopover();
       }
     },
     // 侧边栏添加节点
@@ -151,7 +211,7 @@ export default {
         x: 300,
         y: 300,
         id: nodeId,
-        text: '节点' + this.count,
+        text: item.name,
         properties: {
           type: item.type,
           width: item.width,
@@ -191,7 +251,7 @@ export default {
         x,
         y,
         id: nodeId,
-        text: '节点' + this.count,
+        text: item.name,
         properties: {
           type: item.type,
           width: item.width,
@@ -203,7 +263,7 @@ export default {
         targetNodeId: nodeId,
         id: edgeId,
         type: "polyline",
-        text: "连线",
+        text: "",
       });
       this.count += 1
     }
