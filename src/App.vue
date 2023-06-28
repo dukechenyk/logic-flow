@@ -22,17 +22,17 @@ export default {
       enterNode: {},
       enterEdge: {},
       direction: '',
-      cilent: {
-        x: 0,
-        y: 0
-      },
       transItem: {
         x: 0,
         y: 0
       },
+      cilent: {
+        top: 0,
+        left: 0
+      },
       popoverItem: {
-        x: 0,
-        y: 0
+        top: 0,
+        left: 0
       },
       showPopover: false,
       typeList: [
@@ -113,6 +113,7 @@ export default {
     });
     // 画布平移
     this.lf.on("graph:transform", ({transform}) => {
+      console.log(transform)
       // 上次移动的坐标点距离
       const transItemX = this.transItem.x
       const transItemY = this.transItem.y
@@ -121,13 +122,14 @@ export default {
       const transformY = transform.TRANSLATE_Y
       // 保留上次移动点
       this.transItem = {
-        x: transformY,
-        y: transformX
+        x: transformX,
+        y: transformY
       }
       this.cilent = {
-        x: this.cilent.y + (transformY - transItemY),
-        y: this.cilent.x + (transformX - transItemX),
+        top: this.cilent.top + (transformY - transItemY),
+        left: this.cilent.left + (transformX - transItemX),
       }
+      console.log(this.cilent)
       if(this.showPopover){
         this.setPopoverMove()
       }
@@ -138,54 +140,54 @@ export default {
     setLogicXy(direction){
       let popovertop = 0;
       let popoverleft = 0;
-      let x = 0;
-      let y = 0;
+      let top = 0;
+      let left = 0;
       const e = event || window.event;  //标准化事件对象
       if (e.pageX || e.pageY) {  //获取鼠标指针的当前坐标值
-        popovertop = e.pageX;
-        popoverleft = e.pageY;
+        popovertop = e.pageY;
+        popoverleft = e.pageX;
       } else if (e.clientX || e.clientY) {
-        popovertop = event.clientX + document.documentElement.scrollLeft + document.body.scrollLeft;
-        popoverleft = event.clientY + document.documentElement.scrollTop + document.body.scrollTop;
+        popovertop = event.clientY + document.documentElement.scrollTop + document.body.scrollTop;
+        popoverleft = event.clientX + document.documentElement.scrollLeft + document.body.scrollLeft;
       }
       // 获取选择组件高度
       const popoverHeight = Math.ceil(this.typeList?.length / 2) * 60 + 30
 
       switch (direction) {
         case 'top':
-          x = popoverleft - popoverHeight
-          y = popovertop + 10
+          top = popovertop - popoverHeight
+          left = popoverleft + 10
           break;
         case 'right':
-          x = popoverleft
-          y = popovertop + 10
+          top = popovertop
+          left = popoverleft + 10
           break;
         case 'bottom':
-          x = popoverleft + 10
-          y = popovertop
+          top = popovertop + 10
+          left = popoverleft
           break;
         case 'left':
-          x = popoverleft
-          y = popovertop - 100
+          top = popovertop
+          left = popoverleft - 100
           break;
         default:
           break;
       }
-      this.popoverItem = {x, y}
+      this.popoverItem = {top, left}
       const logic = document.getElementById(`logic-custom-popover${this.enterNode.id}`);
-      logic.style = `--popover-top: ${x}px; --popover-left: ${y}px`
+      logic.style = `--popover-top: ${top}px; --popover-left: ${left}px`
       this.hiddenLogic()
       const popover = document.getElementById(`mypopover${this.enterNode.id}`);
       popover?.showPopover();
       this.showPopover = true
-      this.cilent = {x: 0, y: 0}
+      this.cilent = {top: 0, left: 0}
     },
     // 移动画布修改popover位置
     setPopoverMove(){
-      const x = this.popoverItem.x + this.cilent.x
-      const y = this.popoverItem.y + this.cilent.y
+      const top = this.popoverItem.top + this.cilent.top
+      const left = this.popoverItem.left + this.cilent.left
       const logic = document.getElementById(`logic-custom-popover${this.enterNode.id}`);
-      logic.style = `--popover-top: ${x}px; --popover-left: ${y}px`
+      logic.style = `--popover-top: ${top}px; --popover-left: ${left}px`
     },
     // 隐藏快速添加节点按钮
     hiddenLogic(){
@@ -202,6 +204,7 @@ export default {
         const popover = document.getElementById(`mypopover${this.enterNode.id}`);
         popover?.hidePopover();
       }
+      this.lf.clearSelectElements();
     },
     // 侧边栏添加节点
     handleRightAdd(item){
