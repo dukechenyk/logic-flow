@@ -109,7 +109,6 @@ export default {
     });
     // 画布平移
     this.lf.on("graph:transform", ({transform}) => {
-      console.log(transform)
       // 上次移动的坐标点距离
       const transItemX = this.transItem.x
       const transItemY = this.transItem.y
@@ -125,7 +124,6 @@ export default {
         top: this.cilent.top + (transformY - transItemY),
         left: this.cilent.left + (transformX - transItemX),
       }
-      console.log(this.cilent)
       if(this.showPopover){
         this.setPopoverMove()
       }
